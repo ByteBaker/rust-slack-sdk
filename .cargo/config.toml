@@ -1,0 +1,15 @@
+[target.'cfg(all())']
+rustflags = [
+    "-W", "rust-2021-compatibility",
+    "-W", "missing-debug-implementations",
+]
+
+[build]
+# Always use all CPU cores for compilation
+jobs = -1
+
+[alias]
+# Custom cargo commands
+lint = "clippy --all-targets --all-features -- -D warnings"
+fmt-check = "fmt --all -- --check"
+test-all = "test --all-features --workspace"
