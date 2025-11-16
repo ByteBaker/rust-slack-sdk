@@ -48,7 +48,7 @@ pub use state::RetryState;
 /// - Rate limit errors (HTTP 429)
 /// - Server errors (HTTP 5xx)
 /// - Connection errors
-pub fn default_retry_handlers() -> Vec<Box<dyn RetryHandler>> {
+pub fn default_retry_handlers() -> Vec<Box<dyn RetryHandler + Send + Sync>> {
     vec![
         Box::new(RateLimitErrorHandler::default()),
         Box::new(ServerErrorHandler::default()),

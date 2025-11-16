@@ -69,6 +69,10 @@ aws-config = { version = "1.5", optional = true }
 # Time handling
 chrono = "0.4"
 
+# System information
+os_info = "3.8"
+rustc_version_runtime = "0.3"
+
 [dev-dependencies]
 # Testing frameworks
 wiremock = "0.6"

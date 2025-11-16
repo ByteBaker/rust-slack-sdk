@@ -55,6 +55,25 @@ pub enum SlackError {
     /// An I/O error occurred.
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
+
+    /// An HTTP error occurred (not from reqwest).
+    #[error("HTTP error: {message}")]
+    HttpError { message: String },
+
+    /// An API error with response data.
+    #[error("API error: {message}")]
+    ApiError {
+        message: String,
+        response: serde_json::Value,
+    },
+
+    /// Invalid input provided to the SDK.
+    #[error("Invalid input: {message}")]
+    InvalidInput { message: String },
+
+    /// An error occurred during pagination.
+    #[error("Pagination error: {0}")]
+    PaginationError(String),
 }
 
 /// An error returned by the Slack API.

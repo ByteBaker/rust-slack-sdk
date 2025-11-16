@@ -55,6 +55,8 @@ pub mod http_retry;
 pub mod logging;
 pub mod models;
 pub mod signature;
+pub mod web;
 pub mod webhook;
 
 // Re-export commonly used types
+pub use web::{AsyncWebClient, SlackResponse, WebClient};
