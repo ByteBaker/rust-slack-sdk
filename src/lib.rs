@@ -47,11 +47,14 @@
 //! - [`error`]: Error types for the SDK
 //! - [`http_retry`]: HTTP retry logic with handlers and state management
 //! - [`logging`]: Logging infrastructure using `tracing`
+//! - [`webhook`]: Webhook clients for incoming webhooks and response URLs
 
 pub mod error;
 pub mod http_retry;
 pub mod logging;
 pub mod models;
+pub mod signature;
+pub mod webhook;
 
 // Re-export commonly used types
 pub use error::{Result, SlackApiError, SlackError};
@@ -68,6 +71,10 @@ pub use models::{
     RadioButtonsElement, SectionBlock, SlackOption, StaticMultiSelectElement, StaticSelectElement,
     TextObject, TimePickerElement, UserMultiSelectElement, UserSelectElement, View, ViewState,
     ViewStateValue,
+};
+pub use signature::SignatureVerifier;
+pub use webhook::{
+    AsyncSendMessageBuilder, AsyncWebhookClient, SendMessageBuilder, WebhookClient, WebhookResponse,
 };
 
 /// The version of this crate.
