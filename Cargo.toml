@@ -47,6 +47,7 @@ bytes = "1.7"
 futures = "0.3"
 uuid = { version = "1.10", features = ["v4"] }
 rand = "0.8"
+async-trait = "0.1"
 
 # Logging (mirroring Python SDK logging patterns)
 tracing = "0.1"
@@ -67,7 +68,7 @@ aws-sdk-s3 = { version = "1.50", optional = true }
 aws-config = { version = "1.5", optional = true }
 
 # Time handling
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 
 # System information
 os_info = "3.8"

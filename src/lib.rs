@@ -54,6 +54,7 @@ pub mod error;
 pub mod http_retry;
 pub mod logging;
 pub mod models;
+pub mod oauth;
 pub mod signature;
 pub mod web;
 pub mod webhook;

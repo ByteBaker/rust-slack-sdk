@@ -280,7 +280,7 @@ impl SlackResponse {
             message: format!("Failed to parse pagination response: {}", e),
         })?;
 
-        Ok(SlackResponse {
+        SlackResponse {
             http_verb: "POST".to_string(),
             api_url: self.api_url,
             data,
@@ -293,7 +293,7 @@ impl SlackResponse {
             },
             client_ref: self.client_ref,
         }
-        .validate()?)
+        .validate()
     }
 }
 

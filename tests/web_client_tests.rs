@@ -394,9 +394,6 @@ async fn test_client_builder() {
         .header("X-Custom", "value")
         .max_retries(5)
         .build();
-
-    // Just verify it builds successfully
-    assert!(true);
 }
 
 #[test]

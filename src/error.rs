@@ -74,6 +74,22 @@ pub enum SlackError {
     /// An error occurred during pagination.
     #[error("Pagination error: {0}")]
     PaginationError(String),
+
+    /// A storage error occurred (OAuth installation storage, state storage, etc.).
+    #[error("Storage error: {0}")]
+    StorageError(String),
+
+    /// A serialization error occurred.
+    #[error("Serialization error: {0}")]
+    SerializationError(String),
+
+    /// A deserialization error occurred.
+    #[error("Deserialization error: {0}")]
+    DeserializationError(String),
+
+    /// A resource was not found.
+    #[error("Not found: {0}")]
+    NotFound(String),
 }
 
 /// An error returned by the Slack API.
@@ -133,6 +149,46 @@ impl SlackApiError {
 
 /// A specialized Result type for Slack SDK operations.
 pub type Result<T> = std::result::Result<T, SlackError>;
+
+/// Convenience type alias for Error
+pub type Error = SlackError;
+
+impl SlackError {
+    /// Creates a storage error
+    pub fn storage_error(message: impl Into<String>) -> Self {
+        Self::StorageError(message.into())
+    }
+
+    /// Creates a serialization error
+    pub fn serialization_error(message: impl Into<String>) -> Self {
+        Self::SerializationError(message.into())
+    }
+
+    /// Creates a deserialization error
+    pub fn deserialization_error(message: impl Into<String>) -> Self {
+        Self::DeserializationError(message.into())
+    }
+
+    /// Creates a not found error
+    pub fn not_found(message: impl Into<String>) -> Self {
+        Self::NotFound(message.into())
+    }
+
+    /// Creates an API error
+    pub fn api_error(message: impl Into<String>) -> Self {
+        Self::ApiError {
+            message: message.into(),
+            response: serde_json::Value::Null,
+        }
+    }
+
+    /// Creates an invalid input error
+    pub fn invalid_input(message: impl Into<String>) -> Self {
+        Self::InvalidInput {
+            message: message.into(),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
