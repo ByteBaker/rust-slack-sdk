@@ -24,10 +24,19 @@ This project is actively being developed using a Test-Driven Development (TDD) a
   - Comprehensive validation
   - 94% test coverage
 
-### Coming Soon
+- ✅ **Signature Verification**
+  - HMAC-SHA256 request validation
+  - 5-minute timestamp expiration
+  - Constant-time comparison
+  - 86% test coverage
 
-- **Signature Verification** - HMAC-SHA256 request validation
-- **Webhook Client** - Incoming webhooks support
+- ✅ **Webhook Client**
+  - Sync and async webhook sending
+  - Text, blocks, and attachments
+  - Response types (in_channel, ephemeral)
+  - 95% test coverage
+
+### Coming Soon
 - **Web API Client** - 260+ Slack API methods
 - **OAuth Implementation** - Complete OAuth 2.0 flow
 - **Socket Mode** - Real-time WebSocket events
@@ -163,11 +172,19 @@ cargo test --all-features --workspace
 - View system (Modal, Home)
 - Full validation and error handling
 
+**Signature Verification:**
+- HMAC-SHA256 request validation
+- Timestamp expiration (5-minute window)
+- Constant-time comparison
+
+**Webhook Client:**
+- Synchronous and asynchronous clients
+- Text, blocks, and attachments support
+- Response types and options
+
 ### Planned
 
 - Web API Client (260+ methods)
-- Signature Verification (HMAC-SHA256)
-- Webhook Client
 - OAuth 2.0 flow
 - Socket Mode (WebSocket)
 - SCIM API (Enterprise)
