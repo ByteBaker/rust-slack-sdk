@@ -91,7 +91,7 @@ serde_json = "1"
 
 ### Sending a Simple Message
 
-```rust
+```rust,no_run
 use slack_rs::web::AsyncWebClient;
 
 #[tokio::main]
@@ -105,19 +105,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None, None, None, None, None, None, None, None, None, None,
     ).await?;
 
-    if response.is_ok() {
-        println!("Message sent successfully!");
-    }
-
+    println!("Message sent: {:?}", response);
     Ok(())
 }
 ```
 
 ### Building Rich Messages with Block Kit
 
-```rust
+```rust,no_run
 use slack_rs::models::*;
 
+# fn example() -> Result<(), Box<dyn std::error::Error>> {
 let blocks = vec![
     HeaderBlock::new("Daily Report")?.into(),
     DividerBlock::new().into(),
@@ -133,14 +131,16 @@ let blocks = vec![
 ];
 
 let blocks_json = serde_json::to_string(&blocks)?;
-// Send with chat_post_message...
+# Ok(())
+# }
 ```
 
 ### OAuth Flow
 
-```rust
-use slack_rs::oauth::{AuthorizeUrlGenerator, installation_store::file::FileInstallationStore};
+```rust,no_run
+use slack_rs::oauth::AuthorizeUrlGenerator;
 
+# fn example() -> Result<(), Box<dyn std::error::Error>> {
 let generator = AuthorizeUrlGenerator::new(
     "your-client-id",
     "https://your-app.com/slack/oauth_redirect",
@@ -149,48 +149,31 @@ let generator = AuthorizeUrlGenerator::new(
 
 let auth_url = generator.generate("unique-state-123", None)?;
 println!("Authorize at: {}", auth_url);
-
-// After user authorizes, exchange code for token
-let response = client.oauth_v2_access(
-    client_id,
-    client_secret,
-    code,
-    Some(redirect_uri),
-).await?;
+# Ok(())
+# }
 ```
 
 ### Socket Mode (Real-time Events)
 
-```rust
+```rust,no_run
 use slack_rs::socket_mode::SocketModeClient;
 
+# async fn example() -> Result<(), Box<dyn std::error::Error>> {
 let mut client = SocketModeClient::new("xapp-your-app-token")?;
 client.connect().await?;
 
-loop {
-    match client.receive_event().await {
-        Ok(event) => {
-            // Handle event
-            client.send_acknowledgement(&event.envelope_id()).await?;
-        }
-        Err(e) => eprintln!("Error: {}", e),
-    }
-}
+// Handle events...
+# Ok(())
+# }
 ```
 
 ### Webhook Handler with Signature Verification
 
-```rust
+```rust,no_run
 use slack_rs::signature::SignatureVerifier;
 
 let verifier = SignatureVerifier::new("your-signing-secret");
-
-// In your HTTP handler
-verifier.verify(
-    request_timestamp,
-    request_body,
-    request_signature,
-)?;
+// Use verifier.is_valid_request() or verifier.is_valid()
 ```
 
 ## Examples
