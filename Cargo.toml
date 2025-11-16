@@ -100,10 +100,3 @@ postgres = ["sqlx/postgres"]
 mysql = ["sqlx/mysql"]
 s3 = ["aws-sdk-s3", "aws-config"]
 
-[[bench]]
-name = "web_client"
-harness = false
-
-[[bench]]
-name = "block_kit_serialization"
-harness = false
