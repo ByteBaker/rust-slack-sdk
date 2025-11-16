@@ -50,9 +50,20 @@ This project is actively being developed using a Test-Driven Development (TDD) a
   - Enterprise Grid support
   - 51 tests, 85% coverage
 
+- ✅ **Socket Mode**
+  - WebSocket client for real-time events
+  - Event handler system
+  - Auto-reconnection
+  - 19 tests
+
+- ✅ **SCIM API**
+  - User and group management
+  - SCIM 2.0 compliant
+  - 16 tests
+
 ### Coming Soon
-- **Socket Mode** - Real-time WebSocket events
-- **Enterprise APIs** - SCIM, Audit Logs
+- **Audit Logs API** - Enterprise audit logs
+- **Polish & Documentation** - Examples, benchmarks
 
 ## Quick Start
 
@@ -208,10 +219,22 @@ cargo test --all-features --workspace
 - Enterprise Grid installations
 - OpenID Connect support
 
+**Socket Mode:**
+- Real-time WebSocket event handling
+- Event handler registration
+- Automatic reconnection
+- Support for all event types
+
+**SCIM API:**
+- User and group provisioning
+- SCIM 2.0 compliant
+- CRUD operations with PATCH support
+- Search and filtering
+
 ### Planned
-- Socket Mode (WebSocket)
-- SCIM API (Enterprise)
 - Audit Logs API (Enterprise)
+- Polish & Documentation
+- Integration testing
 
 ## Contributing
 
