@@ -1,0 +1,144 @@
+//! Basic Bot Example
+//!
+//! This example demonstrates how to create a simple Slack bot that sends messages.
+//!
+//! Usage:
+//!   SLACK_BOT_TOKEN=xoxb-your-token cargo run --example basic_bot
+
+use slack_rs::models::SectionBlock;
+use slack_rs::web::AsyncWebClient;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize logging
+    tracing_subscriber::fmt::init();
+
+    // Get token from environment
+    let token =
+        std::env::var("SLACK_BOT_TOKEN").expect("SLACK_BOT_TOKEN environment variable must be set");
+
+    // Create the client
+    let client = AsyncWebClient::new(&token);
+
+    println!("Starting basic Slack bot...");
+
+    // Test the connection by calling auth.test
+    let auth_response = client.auth_test().await?;
+    if let Ok(body) = auth_response.deserialize_payload() {
+        println!(
+            "Connected as: {}",
+            body.get("user")
+                .and_then(|v| v.as_str())
+                .unwrap_or("unknown")
+        );
+        println!(
+            "Team: {}",
+            body.get("team")
+                .and_then(|v| v.as_str())
+                .unwrap_or("unknown")
+        );
+    }
+
+    // Get the channel ID (you can also use a channel name like "#general")
+    let channel = std::env::var("SLACK_CHANNEL").unwrap_or_else(|_| "#general".to_string());
+
+    // Send a simple text message
+    println!("Sending a simple message to {}...", channel);
+    let response = client
+        .chat_post_message(
+            &channel,
+            "Hello from the Slack SDK for Rust!",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await?;
+
+    if response.is_ok() {
+        println!("Message sent successfully!");
+    } else {
+        eprintln!("Failed to send message: {:?}", response);
+    }
+
+    // Send a message with Block Kit
+    println!("Sending a message with Block Kit...");
+    let blocks = vec![
+        SectionBlock::new("*Hello from Rust!*").unwrap().into(),
+        SectionBlock::new("This message was sent using the Slack SDK for Rust.")
+            .unwrap()
+            .into(),
+    ];
+
+    let blocks_json = serde_json::to_string(&blocks)?;
+    let response = client
+        .chat_post_message(
+            &channel,
+            "Fallback text",
+            Some(&blocks_json),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await?;
+
+    if response.is_ok() {
+        println!("Block Kit message sent successfully!");
+    } else {
+        eprintln!("Failed to send Block Kit message: {:?}", response);
+    }
+
+    // List channels
+    println!("Listing channels...");
+    let channels_response = client
+        .conversations_list(None, None, None, None, None, None, None)
+        .await?;
+
+    if let Ok(body) = channels_response.deserialize_payload() {
+        if let Some(channels_array) = body.get("channels").and_then(|v| v.as_array()) {
+            println!("Found {} channels:", channels_array.len());
+            for channel in channels_array.iter().take(5) {
+                let name = channel
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("unknown");
+                let id = channel
+                    .get("id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("unknown");
+                println!("  - {} ({})", name, id);
+            }
+        }
+    }
+
+    println!("Basic bot example completed!");
+    Ok(())
+}

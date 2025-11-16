@@ -49,6 +49,7 @@
 //! - [`logging`]: Logging infrastructure using `tracing`
 //! - [`webhook`]: Webhook clients for incoming webhooks and response URLs
 
+pub mod audit_logs;
 pub mod constants;
 pub mod error;
 pub mod http_retry;

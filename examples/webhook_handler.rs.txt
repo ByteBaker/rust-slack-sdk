@@ -1,0 +1,270 @@
+//! Webhook Handler Example
+//!
+//! This example demonstrates how to handle incoming webhooks and verify signatures.
+//!
+//! Usage:
+//!   SLACK_SIGNING_SECRET=your-signing-secret \
+//!   cargo run --example webhook_handler
+
+use axum::{
+    extract::{Json, State},
+    http::{HeaderMap, StatusCode},
+    response::IntoResponse,
+    routing::post,
+    Router,
+};
+use serde_json::Value;
+use slack_rs::signature::SignatureVerifier;
+use slack_rs::webhook::AsyncWebhookClient;
+use std::sync::Arc;
+
+#[derive(Clone)]
+struct AppState {
+    verifier: Arc<SignatureVerifier>,
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize logging
+    tracing_subscriber::fmt::init();
+
+    println!("Slack Webhook Handler Example");
+    println!("==============================\n");
+
+    // Get signing secret from environment
+    let signing_secret = std::env::var("SLACK_SIGNING_SECRET")
+        .expect("SLACK_SIGNING_SECRET environment variable must be set");
+
+    // Create signature verifier
+    let verifier = Arc::new(SignatureVerifier::new(&signing_secret));
+
+    // Create application state
+    let state = AppState { verifier };
+
+    // Build the router
+    let app = Router::new()
+        .route("/slack/events", post(handle_event))
+        .route("/slack/interactivity", post(handle_interactivity))
+        .route("/slack/commands", post(handle_command))
+        .with_state(state);
+
+    // Start the server
+    let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
+    let addr = format!("0.0.0.0:{}", port);
+
+    println!("Starting webhook server on {}", addr);
+    println!("Endpoints:");
+    println!("  - POST /slack/events");
+    println!("  - POST /slack/interactivity");
+    println!("  - POST /slack/commands\n");
+
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    axum::serve(listener, app).await?;
+
+    Ok(())
+}
+
+/// Handle incoming Slack events
+async fn handle_event(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    body: String,
+) -> impl IntoResponse {
+    println!("Received event");
+
+    // Verify the request signature
+    let timestamp = headers
+        .get("X-Slack-Request-Timestamp")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    let signature = headers
+        .get("X-Slack-Signature")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if let Err(e) = state.verifier.verify(timestamp, &body, signature) {
+        eprintln!("Signature verification failed: {}", e);
+        return (StatusCode::UNAUTHORIZED, "Invalid signature").into_response();
+    }
+
+    // Parse the body
+    let payload: Value = match serde_json::from_str(&body) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("Failed to parse payload: {}", e);
+            return (StatusCode::BAD_REQUEST, "Invalid JSON").into_response();
+        }
+    };
+
+    // Handle URL verification challenge
+    if let Some(challenge) = payload.get("challenge") {
+        println!("Responding to URL verification challenge");
+        return Json(serde_json::json!({ "challenge": challenge })).into_response();
+    }
+
+    // Handle the event
+    if let Some(event_type) = payload.get("type").and_then(|v| v.as_str()) {
+        println!("Event type: {}", event_type);
+
+        match event_type {
+            "event_callback" => {
+                if let Some(event) = payload.get("event") {
+                    handle_event_callback(event).await;
+                }
+            }
+            _ => {
+                println!("Unhandled event type: {}", event_type);
+            }
+        }
+    }
+
+    StatusCode::OK.into_response()
+}
+
+/// Handle event callbacks
+async fn handle_event_callback(event: &Value) {
+    if let Some(event_type) = event.get("type").and_then(|v| v.as_str()) {
+        println!("Event callback type: {}", event_type);
+
+        match event_type {
+            "message" => {
+                if let Some(text) = event.get("text").and_then(|v| v.as_str()) {
+                    println!("Message: {}", text);
+
+                    // You could respond here using the Web API or a response URL
+                }
+            }
+            "app_mention" => {
+                if let Some(text) = event.get("text").and_then(|v| v.as_str()) {
+                    println!("App mentioned: {}", text);
+                    // Respond to the mention
+                }
+            }
+            _ => {
+                println!("Unhandled event callback type: {}", event_type);
+            }
+        }
+    }
+}
+
+/// Handle interactive events (button clicks, etc.)
+async fn handle_interactivity(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    body: String,
+) -> impl IntoResponse {
+    println!("Received interactivity event");
+
+    // Verify the request signature
+    let timestamp = headers
+        .get("X-Slack-Request-Timestamp")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    let signature = headers
+        .get("X-Slack-Signature")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if let Err(e) = state.verifier.verify(timestamp, &body, signature) {
+        eprintln!("Signature verification failed: {}", e);
+        return StatusCode::UNAUTHORIZED.into_response();
+    }
+
+    // Parse the payload (it's URL-encoded)
+    let payload_str = body
+        .split('&')
+        .find(|s| s.starts_with("payload="))
+        .and_then(|s| s.strip_prefix("payload="))
+        .unwrap_or("");
+
+    let decoded = urlencoding::decode(payload_str).unwrap_or_default();
+    let payload: Value = match serde_json::from_str(&decoded) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("Failed to parse payload: {}", e);
+            return StatusCode::BAD_REQUEST.into_response();
+        }
+    };
+
+    if let Some(action_type) = payload.get("type").and_then(|v| v.as_str()) {
+        println!("Action type: {}", action_type);
+
+        match action_type {
+            "block_actions" => {
+                if let Some(actions) = payload.get("actions").and_then(|v| v.as_array()) {
+                    for action in actions {
+                        if let Some(action_id) = action.get("action_id").and_then(|v| v.as_str()) {
+                            println!("Action ID: {}", action_id);
+                            // Handle the action
+                        }
+                    }
+                }
+            }
+            _ => {
+                println!("Unhandled action type: {}", action_type);
+            }
+        }
+    }
+
+    StatusCode::OK.into_response()
+}
+
+/// Handle slash commands
+async fn handle_command(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    body: String,
+) -> impl IntoResponse {
+    println!("Received slash command");
+
+    // Verify the request signature
+    let timestamp = headers
+        .get("X-Slack-Request-Timestamp")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    let signature = headers
+        .get("X-Slack-Signature")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if let Err(e) = state.verifier.verify(timestamp, &body, signature) {
+        eprintln!("Signature verification failed: {}", e);
+        return (StatusCode::UNAUTHORIZED, "Invalid signature").into_response();
+    }
+
+    // Parse the command
+    let params: Vec<(String, String)> = body
+        .split('&')
+        .filter_map(|pair| {
+            let mut parts = pair.splitn(2, '=');
+            let key = parts.next()?.to_string();
+            let value = urlencoding::decode(parts.next()?).ok()?.to_string();
+            Some((key, value))
+        })
+        .collect();
+
+    let command = params
+        .iter()
+        .find(|(k, _)| k == "command")
+        .map(|(_, v)| v.as_str())
+        .unwrap_or("");
+
+    let text = params
+        .iter()
+        .find(|(k, _)| k == "text")
+        .map(|(_, v)| v.as_str())
+        .unwrap_or("");
+
+    println!("Command: {} {}", command, text);
+
+    // Respond to the command
+    let response = serde_json::json!({
+        "response_type": "in_channel",
+        "text": format!("You ran: {} {}", command, text),
+    });
+
+    Json(response).into_response()
+}

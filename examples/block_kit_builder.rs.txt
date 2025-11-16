@@ -1,0 +1,261 @@
+//! Block Kit Builder Example
+//!
+//! This example demonstrates how to build rich UI components using Slack's Block Kit.
+//!
+//! Usage:
+//!   SLACK_BOT_TOKEN=xoxb-your-token cargo run --example block_kit_builder
+
+use slack_rs::models::*;
+use slack_rs::web::AsyncWebClient;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize logging
+    tracing_subscriber::fmt::init();
+
+    println!("Slack Block Kit Builder Example");
+    println!("================================\n");
+
+    // Example 1: Simple message with sections
+    println!("Example 1: Simple Message with Sections");
+    let simple_blocks = build_simple_message()?;
+    print_blocks(&simple_blocks);
+
+    // Example 2: Rich message with images and buttons
+    println!("\nExample 2: Rich Message with Images and Buttons");
+    let rich_blocks = build_rich_message()?;
+    print_blocks(&rich_blocks);
+
+    // Example 3: Input form
+    println!("\nExample 3: Input Form Modal");
+    let form_view = build_input_form()?;
+    println!("{}", serde_json::to_string_pretty(&form_view)?);
+
+    // Example 4: Data selection interface
+    println!("\nExample 4: Data Selection Interface");
+    let selection_blocks = build_selection_interface()?;
+    print_blocks(&selection_blocks);
+
+    // Example 5: Send a message (if token is provided)
+    if let Ok(token) = std::env::var("SLACK_BOT_TOKEN") {
+        let channel = std::env::var("SLACK_CHANNEL").unwrap_or_else(|_| "#general".to_string());
+
+        println!("\nSending Block Kit message to Slack...");
+        let client = AsyncWebClient::new(&token);
+
+        let blocks_json = serde_json::to_string(&rich_blocks)?;
+        let response = client
+            .chat_post_message(
+                &channel,
+                "Block Kit Example",
+                Some(&blocks_json),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await?;
+
+        if response.is_ok() {
+            println!("Message sent successfully!");
+        } else {
+            eprintln!("Failed to send message: {:?}", response);
+        }
+    } else {
+        println!("\nSet SLACK_BOT_TOKEN to send messages to Slack");
+    }
+
+    Ok(())
+}
+
+/// Build a simple message with header, divider, and sections
+fn build_simple_message() -> Result<Vec<Block>, Box<dyn std::error::Error>> {
+    Ok(vec![
+        HeaderBlock::new("Daily Status Report")?.into(),
+        DividerBlock::new().into(),
+        SectionBlock::new("*Project:* Mobile App Redesign")?.into(),
+        SectionBlock::new("*Status:* On Track")?.into(),
+        SectionBlock::new("*Progress:* 75% Complete")?.into(),
+    ])
+}
+
+/// Build a rich message with images, formatting, and actions
+fn build_rich_message() -> Result<Vec<Block>, Box<dyn std::error::Error>> {
+    // Header
+    let header = HeaderBlock::new("New Pull Request")?.into();
+
+    // Main section with accessory
+    let section = SectionBlock::builder()
+        .text("*<https://github.com/user/repo/pull/123|PR #123: Add new feature>*\nOpened by @johndoe\n\n:white_check_mark: All checks passed")
+        .accessory(
+            ButtonElement::new("View PR", "view_pr_123")
+                .with_url("https://github.com/user/repo/pull/123")
+                .with_style(ButtonStyle::Primary)
+                .build()?
+        )
+        .build()?
+        .into();
+
+    // Context
+    let context = ContextBlock::builder()
+        .elements(vec![
+            TextObject::markdown(":calendar: Opened 2 hours ago")?,
+            TextObject::markdown(":speech_balloon: 3 comments")?,
+            TextObject::markdown(":heavy_plus_sign: 150 :heavy_minus_sign: 23")?,
+        ])
+        .build()?
+        .into();
+
+    // Divider
+    let divider = DividerBlock::new().into();
+
+    // Actions
+    let actions = ActionsBlock::builder()
+        .elements(vec![
+            ButtonElement::new("Approve", "approve_pr_123")
+                .with_style(ButtonStyle::Primary)
+                .build()?,
+            ButtonElement::new("Request Changes", "request_changes_123")
+                .with_style(ButtonStyle::Danger)
+                .build()?,
+            ButtonElement::new("Comment", "comment_pr_123").build()?,
+        ])
+        .build()?
+        .into();
+
+    Ok(vec![header, section, context, divider, actions])
+}
+
+/// Build an input form as a modal view
+fn build_input_form() -> Result<View, Box<dyn std::error::Error>> {
+    View::modal()
+        .title("Submit Feedback")
+        .submit("Submit")
+        .close("Cancel")
+        .blocks(vec![
+            // Name input
+            InputBlock::new("Your Name")
+                .element(PlainTextInputElement::new("name_input"))
+                .block_id("name_block")
+                .build()?,
+            // Email input
+            InputBlock::new("Email Address")
+                .element(
+                    PlainTextInputElement::new("email_input").with_placeholder("you@example.com"),
+                )
+                .block_id("email_block")
+                .build()?,
+            // Category selection
+            InputBlock::new("Feedback Category")
+                .element(StaticSelectElement::new(
+                    "category_select",
+                    vec![
+                        SlackOption::new("Bug Report", "bug")?,
+                        SlackOption::new("Feature Request", "feature")?,
+                        SlackOption::new("General Feedback", "general")?,
+                    ],
+                ))
+                .block_id("category_block")
+                .build()?,
+            // Multi-line feedback
+            InputBlock::new("Your Feedback")
+                .element(
+                    PlainTextInputElement::new("feedback_input")
+                        .with_multiline(true)
+                        .with_min_length(10),
+                )
+                .block_id("feedback_block")
+                .build()?,
+            // Optional: Priority checkboxes
+            InputBlock::new("Priority")
+                .element(CheckboxesElement::new(
+                    "priority_checkbox",
+                    vec![
+                        SlackOption::new("Urgent", "urgent")?,
+                        SlackOption::new("High Priority", "high")?,
+                    ],
+                ))
+                .block_id("priority_block")
+                .optional(true)
+                .build()?,
+        ])
+        .build()
+}
+
+/// Build a data selection interface with various select elements
+fn build_selection_interface() -> Result<Vec<Block>, Box<dyn std::error::Error>> {
+    Ok(vec![
+        HeaderBlock::new("Configure Settings")?.into(),
+        // Static select
+        SectionBlock::builder()
+            .text("*Environment:*")
+            .accessory(StaticSelectElement::new(
+                "env_select",
+                vec![
+                    SlackOption::new("Development", "dev")?,
+                    SlackOption::new("Staging", "staging")?,
+                    SlackOption::new("Production", "prod")?,
+                ],
+            ))
+            .build()?
+            .into(),
+        // Multi-select
+        SectionBlock::builder()
+            .text("*Regions:*")
+            .accessory(MultiStaticSelectElement::new(
+                "region_select",
+                vec![
+                    SlackOption::new("US East", "us-east")?,
+                    SlackOption::new("US West", "us-west")?,
+                    SlackOption::new("EU Central", "eu-central")?,
+                    SlackOption::new("Asia Pacific", "ap")?,
+                ],
+            ))
+            .build()?
+            .into(),
+        // Date picker
+        SectionBlock::builder()
+            .text("*Deployment Date:*")
+            .accessory(DatePickerElement::new("deployment_date"))
+            .build()?
+            .into(),
+        // Time picker (using plain text input as workaround)
+        SectionBlock::builder()
+            .text("*Deployment Time:*")
+            .accessory(PlainTextInputElement::new("deployment_time").with_placeholder("HH:MM"))
+            .build()?
+            .into(),
+        DividerBlock::new().into(),
+        // Confirmation buttons
+        ActionsBlock::builder()
+            .elements(vec![
+                ButtonElement::new("Save Configuration", "save_config")
+                    .with_style(ButtonStyle::Primary)
+                    .build()?,
+                ButtonElement::new("Reset", "reset_config").build()?,
+            ])
+            .build()?
+            .into(),
+    ])
+}
+
+/// Pretty print blocks
+fn print_blocks(blocks: &[Block]) {
+    match serde_json::to_string_pretty(blocks) {
+        Ok(json) => println!("{}", json),
+        Err(e) => eprintln!("Error serializing blocks: {}", e),
+    }
+}

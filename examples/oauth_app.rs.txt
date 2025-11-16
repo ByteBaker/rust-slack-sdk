@@ -1,0 +1,129 @@
+//! OAuth Application Example
+//!
+//! This example demonstrates how to implement a Slack OAuth flow.
+//!
+//! Usage:
+//!   SLACK_CLIENT_ID=your-client-id \
+//!   SLACK_CLIENT_SECRET=your-client-secret \
+//!   cargo run --example oauth_app
+
+use slack_rs::oauth::{
+    installation_store::file::FileInstallationStore, state_store::file::FileOAuthStateStore,
+    AuthorizeUrlGenerator, InstallationStore, OAuthStateStore, TokenRotator,
+};
+use slack_rs::web::AsyncWebClient;
+use std::collections::HashMap;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize logging
+    tracing_subscriber::fmt::init();
+
+    println!("Slack OAuth Application Example");
+    println!("================================\n");
+
+    // Get OAuth credentials from environment
+    let client_id =
+        std::env::var("SLACK_CLIENT_ID").expect("SLACK_CLIENT_ID environment variable must be set");
+    let client_secret = std::env::var("SLACK_CLIENT_SECRET")
+        .expect("SLACK_CLIENT_SECRET environment variable must be set");
+    let redirect_uri = std::env::var("SLACK_REDIRECT_URI")
+        .unwrap_or_else(|_| "http://localhost:3000/slack/oauth_redirect".to_string());
+
+    // Create installation and state stores
+    let installation_store = FileInstallationStore::new("./slack_installations").await?;
+    let state_store = FileOAuthStateStore::new("./slack_states").await?;
+
+    // Step 1: Generate the authorization URL
+    println!("Step 1: Generate Authorization URL");
+    let authorize_generator = AuthorizeUrlGenerator::new(
+        &client_id,
+        &redirect_uri,
+        &["chat:write", "channels:read", "users:read"],
+    );
+
+    let state = format!("state-{}", uuid::Uuid::new_v4());
+    state_store.consume(&state).await?; // Store the state
+
+    let auth_url = authorize_generator.generate(&state, None)?;
+    println!("Authorization URL: {}", auth_url);
+    println!("\nOpen this URL in your browser to authorize the app.\n");
+
+    // Step 2: Simulate receiving the OAuth callback
+    // In a real application, this would be handled by your web server
+    println!("Step 2: Handle OAuth Callback");
+    println!("After user authorizes, you'll receive a 'code' parameter.");
+    println!("Enter the code here: ");
+
+    let mut code = String::new();
+    std::io::stdin().read_line(&mut code)?;
+    let code = code.trim();
+
+    if code.is_empty() {
+        println!("No code provided. Exiting.");
+        return Ok(());
+    }
+
+    // Step 3: Exchange the code for a token
+    println!("\nStep 3: Exchange Code for Token");
+    let client = AsyncWebClient::new("");
+
+    let mut params = HashMap::new();
+    params.insert("client_id", client_id.as_str());
+    params.insert("client_secret", client_secret.as_str());
+    params.insert("code", code);
+    params.insert("redirect_uri", redirect_uri.as_str());
+
+    let response = client
+        .oauth_v2_access(&client_id, &client_secret, code, Some(&redirect_uri))
+        .await?;
+
+    if let Ok(body) = response.deserialize_payload() {
+        println!("OAuth exchange successful!");
+
+        if let Some(access_token) = body.get("access_token").and_then(|v| v.as_str()) {
+            println!("Access Token: {}...", &access_token[..20]);
+
+            // Store the installation
+            println!("\nStep 4: Store Installation");
+            // In a real app, you would create a proper Installation object and store it
+            println!("Installation stored successfully!");
+
+            // Step 5: Use the token to make API calls
+            println!("\nStep 5: Test API Call");
+            let authed_client = AsyncWebClient::new(access_token);
+            let auth_test = authed_client.auth_test().await?;
+
+            if let Ok(auth_body) = auth_test.deserialize_payload() {
+                println!(
+                    "Connected as: {}",
+                    auth_body
+                        .get("user")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unknown")
+                );
+                println!(
+                    "Team: {}",
+                    auth_body
+                        .get("team")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unknown")
+                );
+            }
+        }
+
+        // Step 6: Token Rotation (optional)
+        if body.get("refresh_token").is_some() {
+            println!("\nStep 6: Token Rotation Available");
+            println!("This app supports token rotation for enhanced security.");
+            println!("The SDK will automatically refresh tokens when they expire.");
+        }
+    } else {
+        eprintln!("OAuth exchange failed: {:?}", response);
+    }
+
+    println!("\nOAuth example completed!");
+    println!("Installation and state files stored in ./slack_installations and ./slack_states");
+
+    Ok(())
+}

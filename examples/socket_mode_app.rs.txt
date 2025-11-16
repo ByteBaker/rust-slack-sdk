@@ -1,0 +1,169 @@
+//! Socket Mode Application Example
+//!
+//! This example demonstrates how to create a real-time Slack app using Socket Mode.
+//!
+//! Usage:
+//!   SLACK_APP_TOKEN=xapp-your-token \
+//!   SLACK_BOT_TOKEN=xoxb-your-token \
+//!   cargo run --example socket_mode_app
+
+use slack_rs::socket_mode::{Event, SocketModeClient};
+use slack_rs::web::AsyncWebClient;
+use std::sync::Arc;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize logging
+    tracing_subscriber::fmt::init();
+
+    println!("Socket Mode Application Example");
+    println!("================================\n");
+
+    // Get tokens from environment
+    let app_token =
+        std::env::var("SLACK_APP_TOKEN").expect("SLACK_APP_TOKEN environment variable must be set");
+    let bot_token =
+        std::env::var("SLACK_BOT_TOKEN").expect("SLACK_BOT_TOKEN environment variable must be set");
+
+    // Create the web client for API calls
+    let web_client = Arc::new(AsyncWebClient::new(&bot_token));
+
+    // Create the Socket Mode client
+    let mut socket_client = SocketModeClient::new(&app_token)?;
+
+    println!("Connecting to Slack...");
+
+    // Connect to Socket Mode
+    socket_client.connect().await?;
+
+    println!("Connected! Listening for events...\n");
+
+    // Event loop
+    loop {
+        match socket_client.receive_event().await {
+            Ok(event) => {
+                println!("Received event: {:?}", event.event_type());
+
+                match event {
+                    Event::Message {
+                        envelope_id,
+                        payload,
+                    } => {
+                        println!("Message event: {:?}", payload);
+
+                        // Acknowledge the event
+                        socket_client.send_acknowledgement(&envelope_id).await?;
+
+                        // Parse the message
+                        if let Some(event_obj) = payload.get("event") {
+                            if let Some(text) = event_obj.get("text").and_then(|v| v.as_str()) {
+                                if let Some(channel) =
+                                    event_obj.get("channel").and_then(|v| v.as_str())
+                                {
+                                    // Respond to messages containing "hello"
+                                    if text.to_lowercase().contains("hello") {
+                                        println!("Responding to hello message...");
+
+                                        let response = web_client
+                                            .chat_post_message(
+                                                channel,
+                                                "Hello! I'm a bot running on Socket Mode!",
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                                None,
+                                            )
+                                            .await;
+
+                                        match response {
+                                            Ok(resp) if resp.is_ok() => {
+                                                println!("Response sent successfully!");
+                                            }
+                                            Ok(resp) => {
+                                                eprintln!("Failed to send response: {:?}", resp);
+                                            }
+                                            Err(e) => {
+                                                eprintln!("Error sending response: {}", e);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Event::SlashCommand {
+                        envelope_id,
+                        payload,
+                    } => {
+                        println!("Slash command: {:?}", payload);
+
+                        // Acknowledge the command
+                        socket_client.send_acknowledgement(&envelope_id).await?;
+
+                        // In a real app, you would process the command and respond
+                        println!("Command acknowledged");
+                    }
+                    Event::EventsApi {
+                        envelope_id,
+                        payload,
+                    } => {
+                        println!("Events API: {:?}", payload);
+
+                        // Acknowledge the event
+                        socket_client.send_acknowledgement(&envelope_id).await?;
+                    }
+                    Event::InteractiveEvent {
+                        envelope_id,
+                        payload,
+                    } => {
+                        println!("Interactive event: {:?}", payload);
+
+                        // Acknowledge the interaction
+                        socket_client.send_acknowledgement(&envelope_id).await?;
+                    }
+                    Event::Disconnect => {
+                        println!("Disconnected from Slack");
+                        println!("Reconnecting...");
+                        socket_client.connect().await?;
+                        println!("Reconnected!");
+                    }
+                    _ => {
+                        println!("Other event type");
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("Error receiving event: {}", e);
+
+                // Try to reconnect after errors
+                println!("Attempting to reconnect...");
+                tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+
+                match socket_client.connect().await {
+                    Ok(_) => println!("Reconnected successfully!"),
+                    Err(e) => {
+                        eprintln!("Reconnection failed: {}", e);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    println!("Socket Mode app shut down.");
+    Ok(())
+}
