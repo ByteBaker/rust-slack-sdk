@@ -36,8 +36,14 @@ This project is actively being developed using a Test-Driven Development (TDD) a
   - Response types (in_channel, ephemeral)
   - 95% test coverage
 
+- ✅ **Web API Client**
+  - 287 Slack API methods implemented
+  - Automatic pagination support
+  - File upload (files_upload_v2)
+  - Sync and async clients
+  - 85% test coverage
+
 ### Coming Soon
-- **Web API Client** - 260+ Slack API methods
 - **OAuth Implementation** - Complete OAuth 2.0 flow
 - **Socket Mode** - Real-time WebSocket events
 - **Enterprise APIs** - SCIM, Audit Logs
@@ -182,9 +188,14 @@ cargo test --all-features --workspace
 - Text, blocks, and attachments support
 - Response types and options
 
-### Planned
+**Web API Client:**
+- 287 API methods (chat, conversations, users, files, views, admin, etc.)
+- Automatic pagination with iterator support
+- File upload support
+- Rate limiting and retry handling
+- Sync (WebClient) and async (AsyncWebClient) versions
 
-- Web API Client (260+ methods)
+### Planned
 - OAuth 2.0 flow
 - Socket Mode (WebSocket)
 - SCIM API (Enterprise)
