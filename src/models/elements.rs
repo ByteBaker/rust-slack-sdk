@@ -2046,10 +2046,7 @@ mod tests {
         let button = ButtonElement::new("Click", "btn")
             .unwrap()
             .with_accessibility_label("Click button");
-        assert_eq!(
-            button.accessibility_label,
-            Some("Click button".to_string())
-        );
+        assert_eq!(button.accessibility_label, Some("Click button".to_string()));
     }
 
     #[test]
@@ -2088,11 +2085,8 @@ mod tests {
 
     #[test]
     fn test_static_select_with_option_groups() {
-        let group = OptionGroup::new(
-            "Group",
-            vec![SlackOption::new("Opt", "opt").unwrap()],
-        )
-        .unwrap();
+        let group =
+            OptionGroup::new("Group", vec![SlackOption::new("Opt", "opt").unwrap()]).unwrap();
         let select = StaticSelectElement::with_option_groups("select", vec![group]).unwrap();
         assert!(select.option_groups.is_some());
         assert!(select.options.is_none());

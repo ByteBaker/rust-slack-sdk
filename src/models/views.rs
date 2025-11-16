@@ -573,7 +573,9 @@ mod tests {
     fn test_view_callback_id_length_validation() {
         let blocks = vec![json!({"type": "section", "text": {"type": "mrkdwn", "text": "Hello"}})];
         let long_id = "a".repeat(256);
-        let result = View::modal("Title", blocks).unwrap().with_callback_id(&long_id);
+        let result = View::modal("Title", blocks)
+            .unwrap()
+            .with_callback_id(&long_id);
         assert!(result.is_err());
     }
 
@@ -591,7 +593,9 @@ mod tests {
     fn test_view_submit_length_validation() {
         let blocks = vec![json!({"type": "section", "text": {"type": "mrkdwn", "text": "Hello"}})];
         let long_submit = "a".repeat(25);
-        let result = View::modal("Title", blocks).unwrap().with_submit(&long_submit);
+        let result = View::modal("Title", blocks)
+            .unwrap()
+            .with_submit(&long_submit);
         assert!(result.is_err());
     }
 
@@ -599,7 +603,9 @@ mod tests {
     fn test_view_close_length_validation() {
         let blocks = vec![json!({"type": "section", "text": {"type": "mrkdwn", "text": "Hello"}})];
         let long_close = "a".repeat(25);
-        let result = View::modal("Title", blocks).unwrap().with_close(&long_close);
+        let result = View::modal("Title", blocks)
+            .unwrap()
+            .with_close(&long_close);
         assert!(result.is_err());
     }
 
