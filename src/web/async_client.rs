@@ -97,6 +97,20 @@ pub struct AsyncWebClient {
     max_retries: usize,
 }
 
+impl Clone for AsyncWebClient {
+    fn clone(&self) -> Self {
+        Self {
+            token: self.token.clone(),
+            base_url: self.base_url.clone(),
+            http_client: self.http_client.clone(),
+            timeout: self.timeout,
+            headers: self.headers.clone(),
+            retry_handlers: vec![], // Don't clone retry handlers
+            max_retries: self.max_retries,
+        }
+    }
+}
+
 impl AsyncWebClient {
     /// The default Slack API base URL
     pub const BASE_URL: &'static str = "https://slack.com/api/";

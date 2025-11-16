@@ -55,7 +55,9 @@ pub mod http_retry;
 pub mod logging;
 pub mod models;
 pub mod oauth;
+pub mod scim;
 pub mod signature;
+pub mod socket_mode;
 pub mod web;
 pub mod webhook;
 
