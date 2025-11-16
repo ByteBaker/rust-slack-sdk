@@ -1,28 +1,14 @@
 //! View objects for modals and Home tabs.
 
+use crate::constants::limits::{
+    MAX_CALLBACK_ID_LENGTH, MAX_PRIVATE_METADATA_LENGTH, MAX_VIEW_BLOCKS, MAX_VIEW_BUTTON_LENGTH,
+    MAX_VIEW_TITLE_LENGTH,
+};
 use crate::error::{Result, SlackError};
 use crate::models::objects::TextObject;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-
-/// Maximum length for view titles (24 characters).
-pub const MAX_TITLE_LENGTH: usize = 24;
-
-/// Maximum length for close button text (24 characters).
-pub const MAX_CLOSE_LENGTH: usize = 24;
-
-/// Maximum length for submit button text (24 characters).
-pub const MAX_SUBMIT_LENGTH: usize = 24;
-
-/// Maximum number of blocks in a view (100).
-pub const MAX_BLOCKS: usize = 100;
-
-/// Maximum length for private metadata (3000 characters).
-pub const MAX_PRIVATE_METADATA_LENGTH: usize = 3000;
-
-/// Maximum length for callback ID (255 characters).
-pub const MAX_CALLBACK_ID_LENGTH: usize = 255;
 
 /// A view object for modals and Home tabs.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -108,17 +94,17 @@ impl View {
     pub fn modal(title: impl Into<String>, blocks: Vec<Value>) -> Result<Self> {
         let title_str = title.into();
 
-        if title_str.is_empty() || title_str.len() > MAX_TITLE_LENGTH {
+        if title_str.is_empty() || title_str.len() > MAX_VIEW_TITLE_LENGTH {
             return Err(SlackError::Validation(format!(
                 "Modal title length must be between 1 and {}",
-                MAX_TITLE_LENGTH
+                MAX_VIEW_TITLE_LENGTH
             )));
         }
 
-        if blocks.is_empty() || blocks.len() > MAX_BLOCKS {
+        if blocks.is_empty() || blocks.len() > MAX_VIEW_BLOCKS {
             return Err(SlackError::Validation(format!(
                 "View must have between 1 and {} blocks",
-                MAX_BLOCKS
+                MAX_VIEW_BLOCKS
             )));
         }
 
@@ -149,10 +135,10 @@ impl View {
     /// # Arguments
     /// * `blocks` - The blocks to display (max 100)
     pub fn home(blocks: Vec<Value>) -> Result<Self> {
-        if blocks.is_empty() || blocks.len() > MAX_BLOCKS {
+        if blocks.is_empty() || blocks.len() > MAX_VIEW_BLOCKS {
             return Err(SlackError::Validation(format!(
                 "View must have between 1 and {} blocks",
-                MAX_BLOCKS
+                MAX_VIEW_BLOCKS
             )));
         }
 
@@ -201,11 +187,11 @@ impl View {
     /// Sets the submit button text (modals only).
     pub fn with_submit(mut self, submit: impl Into<String>) -> Result<Self> {
         let submit_str = submit.into();
-        if submit_str.len() > MAX_SUBMIT_LENGTH {
+        if submit_str.len() > MAX_VIEW_BUTTON_LENGTH {
             return Err(SlackError::Validation(format!(
                 "Submit text length {} exceeds maximum {}",
                 submit_str.len(),
-                MAX_SUBMIT_LENGTH
+                MAX_VIEW_BUTTON_LENGTH
             )));
         }
         self.submit = Some(TextObject::plain(submit_str)?);
@@ -215,11 +201,11 @@ impl View {
     /// Sets the close button text (modals only).
     pub fn with_close(mut self, close: impl Into<String>) -> Result<Self> {
         let close_str = close.into();
-        if close_str.len() > MAX_CLOSE_LENGTH {
+        if close_str.len() > MAX_VIEW_BUTTON_LENGTH {
             return Err(SlackError::Validation(format!(
                 "Close text length {} exceeds maximum {}",
                 close_str.len(),
-                MAX_CLOSE_LENGTH
+                MAX_VIEW_BUTTON_LENGTH
             )));
         }
         self.close = Some(TextObject::plain(close_str)?);

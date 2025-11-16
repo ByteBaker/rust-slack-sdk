@@ -4,6 +4,7 @@
 
 use super::interval::{BackoffIntervalCalculator, IntervalCalculator};
 use super::state::RetryState;
+use crate::constants::{headers, status_codes};
 use std::time::Duration;
 use tracing::{info, warn};
 
@@ -96,7 +97,7 @@ impl RateLimitErrorHandler {
     /// Gets the retry-after duration from the response headers.
     fn get_retry_after(&self, response: &HttpResponse) -> Option<Duration> {
         response
-            .get_header("Retry-After")
+            .get_header(headers::RETRY_AFTER)
             .and_then(|v| v.parse::<u64>().ok())
             .map(Duration::from_secs)
     }
@@ -114,7 +115,7 @@ impl RetryHandler for RateLimitErrorHandler {
         }
 
         if let Some(resp) = response {
-            if resp.status_code == 429 {
+            if resp.status_code == status_codes::TOO_MANY_REQUESTS {
                 let retry_after = self
                     .get_retry_after(resp)
                     .unwrap_or_else(|| Duration::from_secs(1));
@@ -194,7 +195,7 @@ impl RetryHandler for ServerErrorHandler {
         }
 
         if let Some(resp) = response {
-            if (500..600).contains(&resp.status_code) {
+            if resp.status_code >= status_codes::INTERNAL_SERVER_ERROR && resp.status_code < 600 {
                 warn!(
                     status_code = resp.status_code,
                     attempt = state.current_attempt,

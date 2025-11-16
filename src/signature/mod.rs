@@ -21,15 +21,13 @@
 //! }
 //! ```
 
+use crate::constants::{headers, signature, time};
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 type HmacSha256 = Hmac<Sha256>;
-
-/// Maximum age of a request timestamp in seconds (5 minutes).
-const MAX_REQUEST_AGE_SECS: u64 = 300;
 
 /// Verifies Slack request signatures using HMAC-SHA256.
 ///
@@ -63,7 +61,12 @@ impl SignatureVerifier {
     /// The signature in the format "v0={hex}"
     pub fn generate_signature(&self, timestamp: &str, body: &[u8]) -> String {
         let body_str = String::from_utf8_lossy(body);
-        let sig_basestring = format!("v0:{}:{}", timestamp, body_str);
+        let sig_basestring = format!(
+            "{}:{}:{}",
+            signature::SIGNATURE_VERSION,
+            timestamp,
+            body_str
+        );
 
         let mut mac = HmacSha256::new_from_slice(self.signing_secret.as_bytes())
             .expect("HMAC can take key of any size");
@@ -72,7 +75,7 @@ impl SignatureVerifier {
         let result = mac.finalize();
         let code_bytes = result.into_bytes();
 
-        format!("v0={}", hex::encode(code_bytes))
+        format!("{}{}", signature::SIGNATURE_PREFIX, hex::encode(code_bytes))
     }
 
     /// Verifies if a request is valid by checking headers.
@@ -90,12 +93,12 @@ impl SignatureVerifier {
             .map(|(k, v)| (k.to_lowercase(), v.clone()))
             .collect();
 
-        let timestamp = match normalized.get("x-slack-request-timestamp") {
+        let timestamp = match normalized.get(headers::SLACK_REQUEST_TIMESTAMP) {
             Some(ts) => ts.as_str(),
             None => return false,
         };
 
-        let signature = match normalized.get("x-slack-signature") {
+        let signature = match normalized.get(headers::SLACK_SIGNATURE) {
             Some(sig) => sig.as_str(),
             None => return false,
         };
@@ -124,7 +127,7 @@ impl SignatureVerifier {
             .expect("Time went backwards")
             .as_secs();
 
-        if now.abs_diff(timestamp_num) > MAX_REQUEST_AGE_SECS {
+        if now.abs_diff(timestamp_num) > time::MAX_REQUEST_AGE_SECS {
             return false;
         }
 
@@ -149,7 +152,7 @@ impl SignatureVerifier {
             Err(_) => return false,
         };
 
-        if current_time.abs_diff(timestamp_num) > MAX_REQUEST_AGE_SECS {
+        if current_time.abs_diff(timestamp_num) > time::MAX_REQUEST_AGE_SECS {
             return false;
         }
 

@@ -3,52 +3,15 @@
 //! Elements are smaller UI components that can be used inside blocks.
 //! They include buttons, select menus, date pickers, and more.
 
+use crate::constants::limits::{
+    MAX_ACTION_ID_LENGTH, MAX_ALT_TEXT_LENGTH, MAX_BUTTON_TEXT_LENGTH, MAX_BUTTON_VALUE_LENGTH,
+    MAX_CHOICE_OPTIONS, MAX_INITIAL_OPTIONS, MAX_OVERFLOW_OPTIONS, MAX_PLACEHOLDER_LENGTH,
+    MAX_SELECT_OPTIONS, MAX_TEXT_LENGTH, MAX_URL_LENGTH, MIN_OVERFLOW_OPTIONS,
+};
 use crate::error::{Result, SlackError};
 use crate::models::objects::{ConfirmObject, OptionGroup, SlackOption, TextObject};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-
-/// Maximum length for action IDs (255 characters).
-pub const MAX_ACTION_ID_LENGTH: usize = 255;
-
-/// Maximum length for placeholder text (150 characters).
-pub const MAX_PLACEHOLDER_LENGTH: usize = 150;
-
-/// Maximum length for button text (75 characters).
-pub const MAX_BUTTON_TEXT_LENGTH: usize = 75;
-
-/// Maximum length for button values (2000 characters).
-pub const MAX_BUTTON_VALUE_LENGTH: usize = 2000;
-
-/// Maximum length for button URLs (3000 characters).
-pub const MAX_BUTTON_URL_LENGTH: usize = 3000;
-
-/// Maximum length for image URLs (3000 characters).
-pub const MAX_IMAGE_URL_LENGTH: usize = 3000;
-
-/// Maximum length for image alt text (2000 characters).
-pub const MAX_IMAGE_ALT_TEXT_LENGTH: usize = 2000;
-
-/// Maximum length for plain text input (3000 characters).
-pub const MAX_PLAIN_TEXT_INPUT_LENGTH: usize = 3000;
-
-/// Maximum number of options in a select menu (100).
-pub const MAX_SELECT_OPTIONS: usize = 100;
-
-/// Maximum number of option groups in a select menu (100).
-pub const MAX_SELECT_OPTION_GROUPS: usize = 100;
-
-/// Maximum number of initial options for multi-select (100).
-pub const MAX_MULTI_SELECT_INITIAL_OPTIONS: usize = 100;
-
-/// Maximum number of options in overflow menu (5).
-pub const MAX_OVERFLOW_OPTIONS: usize = 5;
-
-/// Maximum number of options in checkboxes (10).
-pub const MAX_CHECKBOX_OPTIONS: usize = 10;
-
-/// Maximum number of options in radio buttons (10).
-pub const MAX_RADIO_BUTTON_OPTIONS: usize = 10;
 
 /// Style for buttons.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -152,11 +115,11 @@ impl ButtonElement {
     /// Sets the URL for this button.
     pub fn with_url(mut self, url: impl Into<String>) -> Result<Self> {
         let url_str = url.into();
-        if url_str.len() > MAX_BUTTON_URL_LENGTH {
+        if url_str.len() > MAX_URL_LENGTH {
             return Err(SlackError::Validation(format!(
                 "Button URL length {} exceeds maximum {}",
                 url_str.len(),
-                MAX_BUTTON_URL_LENGTH
+                MAX_URL_LENGTH
             )));
         }
         self.url = Some(url_str);
@@ -211,19 +174,19 @@ impl ImageElement {
         let url = image_url.into();
         let alt = alt_text.into();
 
-        if url.len() > MAX_IMAGE_URL_LENGTH {
+        if url.len() > MAX_URL_LENGTH {
             return Err(SlackError::Validation(format!(
                 "Image URL length {} exceeds maximum {}",
                 url.len(),
-                MAX_IMAGE_URL_LENGTH
+                MAX_URL_LENGTH
             )));
         }
 
-        if alt.len() > MAX_IMAGE_ALT_TEXT_LENGTH {
+        if alt.len() > MAX_ALT_TEXT_LENGTH {
             return Err(SlackError::Validation(format!(
                 "Image alt text length {} exceeds maximum {}",
                 alt.len(),
-                MAX_IMAGE_ALT_TEXT_LENGTH
+                MAX_ALT_TEXT_LENGTH
             )));
         }
 
@@ -239,11 +202,11 @@ impl ImageElement {
     pub fn from_slack_file(slack_file: Value, alt_text: impl Into<String>) -> Result<Self> {
         let alt = alt_text.into();
 
-        if alt.len() > MAX_IMAGE_ALT_TEXT_LENGTH {
+        if alt.len() > MAX_ALT_TEXT_LENGTH {
             return Err(SlackError::Validation(format!(
                 "Image alt text length {} exceeds maximum {}",
                 alt.len(),
-                MAX_IMAGE_ALT_TEXT_LENGTH
+                MAX_ALT_TEXT_LENGTH
             )));
         }
 
@@ -346,11 +309,11 @@ impl PlainTextInputElement {
     /// Sets the initial value.
     pub fn with_initial_value(mut self, value: impl Into<String>) -> Result<Self> {
         let val = value.into();
-        if val.len() > MAX_PLAIN_TEXT_INPUT_LENGTH {
+        if val.len() > MAX_TEXT_LENGTH {
             return Err(SlackError::Validation(format!(
                 "Initial value length {} exceeds maximum {}",
                 val.len(),
-                MAX_PLAIN_TEXT_INPUT_LENGTH
+                MAX_TEXT_LENGTH
             )));
         }
         self.initial_value = Some(val);
@@ -371,10 +334,10 @@ impl PlainTextInputElement {
 
     /// Sets the maximum length.
     pub fn with_max_length(mut self, max: usize) -> Result<Self> {
-        if max > MAX_PLAIN_TEXT_INPUT_LENGTH {
+        if max > MAX_TEXT_LENGTH {
             return Err(SlackError::Validation(format!(
                 "Max length {} exceeds maximum {}",
-                max, MAX_PLAIN_TEXT_INPUT_LENGTH
+                max, MAX_TEXT_LENGTH
             )));
         }
         self.max_length = Some(max);
@@ -481,11 +444,11 @@ impl StaticSelectElement {
             )));
         }
 
-        if option_groups.len() > MAX_SELECT_OPTION_GROUPS {
+        if option_groups.len() > MAX_SELECT_OPTIONS {
             return Err(SlackError::Validation(format!(
                 "Option groups count {} exceeds maximum {}",
                 option_groups.len(),
-                MAX_SELECT_OPTION_GROUPS
+                MAX_SELECT_OPTIONS
             )));
         }
 
@@ -617,11 +580,11 @@ impl StaticMultiSelectElement {
 
     /// Sets the initial options.
     pub fn with_initial_options(mut self, options: Vec<SlackOption>) -> Result<Self> {
-        if options.len() > MAX_MULTI_SELECT_INITIAL_OPTIONS {
+        if options.len() > MAX_INITIAL_OPTIONS {
             return Err(SlackError::Validation(format!(
                 "Initial options count {} exceeds maximum {}",
                 options.len(),
-                MAX_MULTI_SELECT_INITIAL_OPTIONS
+                MAX_INITIAL_OPTIONS
             )));
         }
         self.initial_options = Some(options);
@@ -1327,11 +1290,11 @@ impl CheckboxesElement {
             )));
         }
 
-        if options.len() > MAX_CHECKBOX_OPTIONS {
+        if options.len() > MAX_CHOICE_OPTIONS {
             return Err(SlackError::Validation(format!(
                 "Checkboxes count {} exceeds maximum {}",
                 options.len(),
-                MAX_CHECKBOX_OPTIONS
+                MAX_CHOICE_OPTIONS
             )));
         }
 
@@ -1391,11 +1354,11 @@ impl RadioButtonsElement {
             )));
         }
 
-        if options.len() > MAX_RADIO_BUTTON_OPTIONS {
+        if options.len() > MAX_CHOICE_OPTIONS {
             return Err(SlackError::Validation(format!(
                 "Radio buttons count {} exceeds maximum {}",
                 options.len(),
-                MAX_RADIO_BUTTON_OPTIONS
+                MAX_CHOICE_OPTIONS
             )));
         }
 
@@ -1447,10 +1410,11 @@ impl OverflowMenuElement {
             )));
         }
 
-        if options.len() < 2 {
-            return Err(SlackError::Validation(
-                "Overflow menu must have at least 2 options".to_string(),
-            ));
+        if options.len() < MIN_OVERFLOW_OPTIONS {
+            return Err(SlackError::Validation(format!(
+                "Overflow menu must have at least {} options",
+                MIN_OVERFLOW_OPTIONS
+            )));
         }
 
         if options.len() > MAX_OVERFLOW_OPTIONS {

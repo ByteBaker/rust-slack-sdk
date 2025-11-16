@@ -1,12 +1,10 @@
 //! Section block implementation.
 
+use crate::constants::limits::MAX_SECTION_FIELDS;
 use crate::error::{Result, SlackError};
 use crate::models::objects::TextObject;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-
-/// Maximum number of fields in a section block (10).
-pub const MAX_SECTION_FIELDS: usize = 10;
 
 /// A section block for displaying text and an optional accessory element.
 ///

@@ -3,23 +3,12 @@
 //! This module contains the fundamental building blocks used throughout
 //! the Block Kit API, including text objects, options, and confirmation dialogs.
 
+use crate::constants::limits::{
+    MAX_CONFIRM_TEXT_LENGTH, MAX_CONFIRM_TITLE_LENGTH, MAX_OPTION_GROUPS, MAX_OPTION_LABEL_LENGTH,
+    MAX_OPTION_VALUE_LENGTH, MAX_TEXT_LENGTH,
+};
 use crate::error::{Result, SlackError};
 use serde::{Deserialize, Serialize};
-
-/// Maximum text length for most text objects (3000 characters).
-pub const MAX_TEXT_LENGTH: usize = 3000;
-
-/// Maximum length for option labels (75 characters).
-pub const MAX_OPTION_LABEL_LENGTH: usize = 75;
-
-/// Maximum length for option values (75 characters).
-pub const MAX_OPTION_VALUE_LENGTH: usize = 75;
-
-/// Maximum length for confirm dialog titles (100 characters).
-pub const MAX_CONFIRM_TITLE_LENGTH: usize = 100;
-
-/// Maximum length for confirm dialog text (300 characters).
-pub const MAX_CONFIRM_TEXT_LENGTH: usize = 300;
 
 /// A text object that can be either plain text or markdown.
 ///
@@ -224,10 +213,11 @@ impl OptionGroup {
     /// * `label` - The group label
     /// * `options` - The options in this group (max 100)
     pub fn new(label: impl Into<String>, options: Vec<SlackOption>) -> Result<Self> {
-        if options.len() > 100 {
+        if options.len() > MAX_OPTION_GROUPS {
             return Err(SlackError::Validation(format!(
-                "Option group has {} options, maximum is 100",
-                options.len()
+                "Option group has {} options, maximum is {}",
+                options.len(),
+                MAX_OPTION_GROUPS
             )));
         }
 

@@ -1,11 +1,9 @@
 //! Actions block implementation.
 
+use crate::constants::limits::MAX_ACTIONS_ELEMENTS;
 use crate::error::{Result, SlackError};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-
-/// Maximum number of elements in an actions block (25).
-pub const MAX_ACTION_ELEMENTS: usize = 25;
 
 /// An actions block for holding interactive elements.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -34,11 +32,11 @@ impl ActionsBlock {
             ));
         }
 
-        if elements.len() > MAX_ACTION_ELEMENTS {
+        if elements.len() > MAX_ACTIONS_ELEMENTS {
             return Err(SlackError::Validation(format!(
                 "ActionsBlock has {} elements, maximum is {}",
                 elements.len(),
-                MAX_ACTION_ELEMENTS
+                MAX_ACTIONS_ELEMENTS
             )));
         }
 

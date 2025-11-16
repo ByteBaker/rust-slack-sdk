@@ -1,11 +1,9 @@
 //! Context block implementation.
 
+use crate::constants::limits::MAX_CONTEXT_ELEMENTS;
 use crate::error::{Result, SlackError};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-
-/// Maximum number of elements in a context block (10).
-pub const MAX_CONTEXT_ELEMENTS: usize = 10;
 
 /// A context block for displaying contextual information.
 ///

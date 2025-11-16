@@ -1,11 +1,9 @@
 //! Header block implementation.
 
+use crate::constants::limits::MAX_HEADER_TEXT_LENGTH;
 use crate::error::{Result, SlackError};
 use crate::models::objects::TextObject;
 use serde::{Deserialize, Serialize};
-
-/// Maximum text length for header blocks (150 characters).
-pub const MAX_HEADER_TEXT_LENGTH: usize = 150;
 
 /// A header block for displaying prominent text.
 ///
