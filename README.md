@@ -43,8 +43,14 @@ This project is actively being developed using a Test-Driven Development (TDD) a
   - Sync and async clients
   - 85% test coverage
 
+- ✅ **OAuth Implementation**
+  - Complete OAuth 2.0 flow
+  - 4 storage backends (Cache, File, SQLite, State)
+  - Token rotation support
+  - Enterprise Grid support
+  - 51 tests, 85% coverage
+
 ### Coming Soon
-- **OAuth Implementation** - Complete OAuth 2.0 flow
 - **Socket Mode** - Real-time WebSocket events
 - **Enterprise APIs** - SCIM, Audit Logs
 
@@ -195,8 +201,14 @@ cargo test --all-features --workspace
 - Rate limiting and retry handling
 - Sync (WebClient) and async (AsyncWebClient) versions
 
+**OAuth:**
+- Complete OAuth 2.0 flow with state management
+- Multiple storage backends (Cache, File, SQLite)
+- Automatic token rotation
+- Enterprise Grid installations
+- OpenID Connect support
+
 ### Planned
-- OAuth 2.0 flow
 - Socket Mode (WebSocket)
 - SCIM API (Enterprise)
 - Audit Logs API (Enterprise)
