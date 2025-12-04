@@ -33,6 +33,7 @@ fn get_user_agent() -> String {
 /// let client = AuditLogsClient::new("xoxp-your-token");
 /// let response = client.logs(Some(100), Some("user_login"), None, None, None, None, None).unwrap();
 /// ```
+#[derive(Debug)]
 pub struct AuditLogsClient {
     token: String,
     base_url: String,
@@ -214,6 +215,7 @@ impl AuditLogsClient {
 ///     let response = client.logs(Some(100), Some("user_login"), None, None, None, None, None).await.unwrap();
 /// }
 /// ```
+#[derive(Debug)]
 pub struct AsyncAuditLogsClient {
     token: String,
     base_url: String,

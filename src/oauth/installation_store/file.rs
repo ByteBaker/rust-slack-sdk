@@ -1,3 +1,4 @@
+#![allow(missing_debug_implementations)]
 //! File-based installation storage
 //!
 //! Stores installations as JSON files in a directory structure.

@@ -129,7 +129,7 @@ pub enum SocketModeMessageType {
 
 impl SocketModeMessageType {
     /// Parses a message type string into an enum variant.
-    pub fn from_str(s: &str) -> Self {
+    pub fn from_string(s: &str) -> Self {
         match s {
             "events_api" => Self::EventsApi,
             "slash_commands" => Self::SlashCommands,
@@ -251,27 +251,27 @@ mod tests {
     #[test]
     fn test_socket_mode_message_type_from_str() {
         assert_eq!(
-            SocketModeMessageType::from_str("events_api"),
+            SocketModeMessageType::from_string("events_api"),
             SocketModeMessageType::EventsApi
         );
         assert_eq!(
-            SocketModeMessageType::from_str("slash_commands"),
+            SocketModeMessageType::from_string("slash_commands"),
             SocketModeMessageType::SlashCommands
         );
         assert_eq!(
-            SocketModeMessageType::from_str("interactive"),
+            SocketModeMessageType::from_string("interactive"),
             SocketModeMessageType::Interactive
         );
         assert_eq!(
-            SocketModeMessageType::from_str("disconnect"),
+            SocketModeMessageType::from_string("disconnect"),
             SocketModeMessageType::Disconnect
         );
         assert_eq!(
-            SocketModeMessageType::from_str("hello"),
+            SocketModeMessageType::from_string("hello"),
             SocketModeMessageType::Hello
         );
         assert_eq!(
-            SocketModeMessageType::from_str("unknown_type"),
+            SocketModeMessageType::from_string("unknown_type"),
             SocketModeMessageType::Unknown
         );
     }

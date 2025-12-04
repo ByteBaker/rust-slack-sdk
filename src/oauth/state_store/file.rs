@@ -1,3 +1,4 @@
+#![allow(missing_debug_implementations)]
 //! File-based OAuth state storage
 
 use crate::error::{Error, Result};

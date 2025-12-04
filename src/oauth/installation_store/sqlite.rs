@@ -1,3 +1,4 @@
+#![allow(missing_debug_implementations)]
 //! SQLite-based installation storage
 //!
 //! Stores installations in a SQLite database with proper indexing.

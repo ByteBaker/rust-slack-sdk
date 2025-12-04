@@ -1,3 +1,4 @@
+#![allow(missing_debug_implementations)]
 //! Token rotation support for OAuth installations
 //!
 //! Handles automatic token refresh when token rotation is enabled.

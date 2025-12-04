@@ -229,7 +229,7 @@ impl SocketModeClient {
             match self.connection.receive_message().await {
                 Ok(Some(request)) => {
                     // Handle special message types
-                    let msg_type = SocketModeMessageType::from_str(&request.message_type);
+                    let msg_type = SocketModeMessageType::from_string(&request.message_type);
 
                     match msg_type {
                         SocketModeMessageType::Disconnect => {
